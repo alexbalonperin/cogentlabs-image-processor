@@ -5,7 +5,7 @@ const amqp = require('amqplib')
 const HOST = process.env.RABBIT_HOST || 'localhost'
 const USER = process.env.RABBIT_USER
 const PASSWORD = process.env.RABBIT_PASSWORD
-const queue = process.eng.RABBIT_QUEUE
+const queue = process.env.RABBIT_QUEUE
 
 class Rabbit {
   constructor () {
@@ -40,12 +40,7 @@ class Rabbit {
           function doWork (msg) {
             var body = msg.content.toString()
             console.log(" [x] Received '%s'", body)
-            var secs = body.split('.').length - 1
-            console.log(' [x] Task takes %d seconds', secs)
-            setTimeout(() => {
-              console.log(' [x] Done')
-              ch.ack(msg)
-            }, secs * 1000)
+            ch.ack(msg)
           }
         })
       })
