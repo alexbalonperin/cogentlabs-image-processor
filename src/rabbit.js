@@ -1,6 +1,19 @@
 'use strict'
 
 const amqp = require('amqplib')
+const avro = require('avsc');
+
+const type = avro.Type.forSchema({
+  type: 'record',
+  fields: [
+    {name: 'id', type: 'string'},
+    {name: 'image_path', type: 'string'}
+  ]
+});
+
+const RabbitMQMessage = require('./message')
+const ThumbnailGenerator = require('./thumbnail_generator')
+const tg = new ThumbnailGenerator()
 
 const HOST = process.env.RABBIT_HOST || 'localhost'
 const USER = process.env.RABBIT_USER
@@ -37,10 +50,12 @@ class Rabbit {
           })
           return ok
 
-          function doWork (msg) {
-            var body = msg.content.toString()
-            console.log(" [x] Received '%s'", body)
-            ch.ack(msg)
+          function doWork (buf) {
+            const val = type.fromBuffer(buf.content);
+            var parsedMessage = new RabbitMQMessage(val.id, val.image_path)
+            tg.generate(parsedMessage.getImagePath(), parsedMessage.getId())
+            console.log(" [x] Received '%s'", val)
+            ch.ack(buf)
           }
         })
       })
