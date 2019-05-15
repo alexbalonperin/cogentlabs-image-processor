@@ -1,19 +1,21 @@
 'use strict'
 
 const amqp = require('amqplib')
-const avro = require('avsc');
+const avro = require('avsc')
 
 const type = avro.Type.forSchema({
   type: 'record',
-  fields: [
-    {name: 'id', type: 'string'},
-    {name: 'image_path', type: 'string'}
-  ]
-});
+  fields: [{ name: 'id', type: 'string' }, { name: 'image_path', type: 'string' }]
+})
 
 const RabbitMQMessage = require('./message')
 const ThumbnailGenerator = require('./thumbnail_generator')
+
 const tg = new ThumbnailGenerator()
+
+const Redis = require('./redis')
+
+const redis = new Redis()
 
 const HOST = process.env.RABBIT_HOST || 'localhost'
 const USER = process.env.RABBIT_USER
@@ -51,11 +53,13 @@ class Rabbit {
           return ok
 
           function doWork (buf) {
-            const val = type.fromBuffer(buf.content);
-            var parsedMessage = new RabbitMQMessage(val.id, val.image_path)
-            tg.generate(parsedMessage.getImagePath(), parsedMessage.getId())
+            const val = type.fromBuffer(buf.content)
+            redis.setProcessing(val.id)
             console.log(" [x] Received '%s'", val)
+            var msg = new RabbitMQMessage(val.id, val.image_path)
+            tg.generate(msg.getImagePath(), msg.getId())
             ch.ack(buf)
+            redis.setReady(msg.getId())
           }
         })
       })

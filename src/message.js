@@ -6,11 +6,11 @@ class RabbitMQMessage {
     this.imagePath = imagePath
   }
 
-  getId() {
+  getId () {
     return this.id
   }
 
-  getImagePath() {
+  getImagePath () {
     return this.imagePath
   }
 }
