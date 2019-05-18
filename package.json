@@ -5,6 +5,9 @@
   "author": "Alexandre Balon-Perin<abalonperin1@gmail.com>",
   "main": "index.js",
   "license": "UNLICENSED",
+  "engines": {
+    "node": "^10.15.3"
+  },
   "scripts": {
     "prettierjs": "prettier --parser=babel --write '**/*.js'",
     "eslint": "eslint .",

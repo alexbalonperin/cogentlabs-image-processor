@@ -1,8 +1,12 @@
 'use strict'
 
 const im = require('imagemagick')
+const fs = require('fs')
 
 const dstPath = '/tmp/thumbnails/'
+if (!fs.existsSync(dstPath)) {
+  fs.mkdirSync(dstPath)
+}
 
 class ThumbnailGenerator {
   constructor () {
