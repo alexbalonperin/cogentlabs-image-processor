@@ -29,7 +29,7 @@ class Rabbit {
 
   start () {
     console.log('establishing a connection with rabbitmq')
-    this.connection = amqp.connect(`amqp://${USER}:${PASSWORD}@${HOST}`).catch(function (error) {
+    this.connection = amqp.connect(`amqp://${USER}:${PASSWORD}@${HOST}`).catch(error => {
       console.error('[AMQP] connection', error.message)
       setTimeout(this.start(), 10000)
     })

@@ -16,10 +16,11 @@ class ThumbnailGenerator {
   }
 
   generate (imagePath, id) {
+    var filePath = dstPath + 'thumbnail-' + id + '.png'
     im.resize(
       {
         srcPath: imagePath,
-        dstPath: dstPath + 'thumbnail-' + id + '.png',
+        dstPath: filePath,
         height: this.height,
         width: this.width,
         format: this.format
@@ -29,6 +30,7 @@ class ThumbnailGenerator {
         console.log(`resized ${imagePath} to fit within ${this.width}x${this.height}px`)
       }
     )
+    return filePath
   }
 }
 

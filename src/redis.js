@@ -18,7 +18,7 @@ class Redis {
 
   setProcessing (id) {
     if (this.get(id) !== null) {
-      this.set(id, { status: 'processing' })
+      this.set(id, JSON.stringify({ status: 'processing' }))
     } else {
       throw new Error(`trying to get unknown id ${id} in redis`)
     }
@@ -26,7 +26,7 @@ class Redis {
 
   setReady (id, path) {
     if (this.get(id) !== null) {
-      this.set(id, { status: 'ready', path: path })
+      this.set(id, JSON.stringify({ status: 'ready', path: path }))
     } else {
       throw new Error(`trying to get unknown id ${id} in redis`)
     }
