@@ -27,49 +27,50 @@ class Rabbit {
     this.connection = null
   }
 
-  start () {
+  async start () {
     console.log('establishing a connection with rabbitmq')
-    amqp
-      .connect(`amqp://${USER}:${PASSWORD}@${HOST}`)
-      .catch(error => {
-        console.error('[AMQP] connection', error.message)
-        setTimeout(() => this.start(), 10000)
-      })
-      .then(conn => {
+    return await amqp.connect(`amqp://${USER}:${PASSWORD}@${HOST}`).then(
+      conn => {
         console.log('connection established with rabbitmq')
         this.connection = conn
-      })
+        process.once('SIGINT', () => {
+          if (conn) conn.close()
+        })
+      },
+      error => {
+        console.error('[AMQP] connection', error.message)
+        setTimeout(() => this.start(), 10000)
+      }
+    )
   }
 
   consume () {
-    this.connection
-      .then(conn => {
-        process.once('SIGINT', () => {
-          conn.close()
+    this.connection.createChannel().then(
+      ch => {
+        var ok = ch.assertQueue(queue, { durable: true })
+        ok = ok.then(() => {
+          ch.prefetch(1)
         })
-        return conn.createChannel().then(ch => {
-          var ok = ch.assertQueue(queue, { durable: true })
-          ok = ok.then(() => {
-            ch.prefetch(1)
-          })
-          ok = ok.then(() => {
-            ch.consume(queue, doWork, { noAck: false })
-            console.log(' [*] Waiting for messages. To exit press CTRL+C')
-          })
-          return ok
+        ok = ok.then(() => {
+          ch.consume(queue, doWork, { noAck: false })
+          console.log(' [*] Waiting for messages. To exit press CTRL+C')
+        })
+        return ok
 
-          function doWork (buf) {
-            const val = type.fromBuffer(buf.content)
-            redis.setProcessing(val.id)
-            console.log(" [x] Received '%s'", val)
-            var msg = new RabbitMQMessage(val.id, val.image_path)
-            var filePath = tg.generate(msg.getImagePath(), msg.getId())
-            ch.ack(buf)
-            redis.setReady(msg.getId(), filePath)
-          }
-        })
-      })
-      .catch(console.warn)
+        function doWork (buf) {
+          const val = type.fromBuffer(buf.content)
+          redis.setProcessing(val.id)
+          console.log(" [x] Received '%s'", val)
+          var msg = new RabbitMQMessage(val.id, val.image_path)
+          var filePath = tg.generate(msg.getImagePath(), msg.getId())
+          ch.ack(buf)
+          redis.setReady(msg.getId(), filePath)
+        }
+      },
+      error => {
+        console.error('[AMQP] channel', error.message)
+      }
+    )
   }
 }
 
