@@ -18,15 +18,15 @@ class Redis {
 
   setProcessing (id) {
     if (this.get(id) !== null) {
-      this.set(id, 'processing')
+      this.set(id, { status: 'processing' })
     } else {
       throw new Error(`trying to get unknown id ${id} in redis`)
     }
   }
 
-  setReady (id) {
+  setReady (id, path) {
     if (this.get(id) !== null) {
-      this.set(id, 'ready')
+      this.set(id, { status: 'ready', path: path })
     } else {
       throw new Error(`trying to get unknown id ${id} in redis`)
     }

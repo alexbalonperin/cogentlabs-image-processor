@@ -57,9 +57,9 @@ class Rabbit {
             redis.setProcessing(val.id)
             console.log(" [x] Received '%s'", val)
             var msg = new RabbitMQMessage(val.id, val.image_path)
-            tg.generate(msg.getImagePath(), msg.getId())
+            var filePath = tg.generate(msg.getImagePath(), msg.getId())
             ch.ack(buf)
-            redis.setReady(msg.getId())
+            redis.setReady(msg.getId(), filePath)
           }
         })
       })
