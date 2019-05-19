@@ -23,29 +23,44 @@ const PASSWORD = process.env.RABBIT_PASSWORD
 const queue = process.env.RABBIT_QUEUE
 
 class Rabbit {
-  constructor () {
-    this.connection = null
+  init () {
+    this.start()
+      .then(
+        conn => {
+          console.log('Start consuming rabbit queue')
+          this.consume(conn)
+        },
+        error => {
+          console.error('Failed to start.', error.message)
+          throw new Error("Couldn't start")
+        }
+      )
+      .catch(error => {
+        console.error('[AMQP] connection. Retrying.', error.message)
+        setTimeout(() => this.init(), 10000)
+      })
   }
 
-  async start () {
+  start () {
     console.log('establishing a connection with rabbitmq')
-    return await amqp.connect(`amqp://${USER}:${PASSWORD}@${HOST}`).then(
+    return amqp.connect(`amqp://${USER}:${PASSWORD}@${HOST}`).then(
       conn => {
         console.log('connection established with rabbitmq')
-        this.connection = conn
         process.once('SIGINT', () => {
-          if (conn) conn.close()
+          conn.close()
         })
+        return conn
       },
       error => {
-        console.error('[AMQP] connection', error.message)
-        setTimeout(() => this.start(), 10000)
+        console.error('Failed to establish a connection.', error.message)
+        throw new Error("Couldn't establish a connection")
       }
     )
   }
 
-  consume () {
-    this.connection.createChannel().then(
+  consume (conn) {
+    console.log('consuming rabbitmq queue')
+    return conn.createChannel().then(
       ch => {
         var ok = ch.assertQueue(queue, { durable: true })
         ok = ok.then(() => {
@@ -68,7 +83,8 @@ class Rabbit {
         }
       },
       error => {
-        console.error('[AMQP] channel', error.message)
+        console.error('[AMQP] channel. Retrying.', error.message)
+        throw new Error("Couldn't create channel")
       }
     )
   }
